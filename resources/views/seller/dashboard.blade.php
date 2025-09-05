@@ -40,8 +40,8 @@
                                 </svg>
                             </div>
                             <div class="ml-4">
-                                <h3 class="text-2xl font-bold text-gray-900">0</h3>
-                                <p class="text-sm text-gray-600">Total Penjualan</p>
+                                <h3 class="text-2xl font-bold text-gray-900">{{ $totalOrders }}</h3>
+                                <p class="text-sm text-gray-600">Total Pesanan</p>
                             </div>
                         </div>
                     </div>
@@ -58,8 +58,8 @@
                                 </svg>
                             </div>
                             <div class="ml-4">
-                                <h3 class="text-2xl font-bold text-gray-900">0</h3>
-                                <p class="text-sm text-gray-600">Pesanan Baru</p>
+                                <h3 class="text-2xl font-bold text-gray-900">{{ $totalSoldQuantity }}</h3>
+                                <p class="text-sm text-gray-600">Produk Terjual</p>
                             </div>
                         </div>
                     </div>
@@ -76,9 +76,51 @@
                                 </svg>
                             </div>
                             <div class="ml-4">
-                                <h3 class="text-2xl font-bold text-gray-900">Rp 0</h3>
-                                <p class="text-sm text-gray-600">Pendapatan</p>
+                                <h3 class="text-2xl font-bold text-gray-900">Rp {{ number_format($totalEarnings, 0, ',', '.') }}</h3>
+                                <p class="text-sm text-gray-600">Total Pendapatan</p>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Additional Stats Row -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                    <div class="p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-900">Pendapatan Bulan Ini</h3>
+                                <p class="text-3xl font-bold text-green-600">Rp {{ number_format($monthlyEarnings, 0, ',', '.') }}</p>
+                                <p class="text-sm text-gray-600 mt-1">{{ now()->format('F Y') }}</p>
+                            </div>
+                            <div class="flex-shrink-0">
+                                <svg class="h-12 w-12 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1">
+                                    </path>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                    <div class="p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Grafik Pendapatan 7 Hari Terakhir</h3>
+                        <div class="space-y-2">
+                            @foreach($dailyEarnings as $daily)
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm text-gray-600">{{ $daily['date'] }}</span>
+                                    <div class="flex items-center space-x-2">
+                                        <div class="w-20 bg-gray-200 rounded-full h-2">
+                                            <div class="bg-blue-600 h-2 rounded-full" 
+                                                 style="width: {{ $totalEarnings > 0 ? ($daily['earnings'] / $totalEarnings * 100) : 0 }}%"></div>
+                                        </div>
+                                        <span class="text-sm font-medium">Rp {{ number_format($daily['earnings'], 0, ',', '.') }}</span>
+                                    </div>
+                                </div>
+                            @endforeach
                         </div>
                     </div>
                 </div>
@@ -238,6 +280,82 @@
                                         Tambah Produk
                                     </a>
                                 </div>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Orders -->
+            <div class="mt-8">
+                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                    <div class="p-6">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-lg font-semibold text-gray-900">Pesanan Terbaru</h3>
+                            <a href="#" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">
+                                Lihat Semua
+                            </a>
+                        </div>
+
+                        @if ($recentOrders->count() > 0)
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                Invoice
+                                            </th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                Produk
+                                            </th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                Pembeli
+                                            </th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                Qty
+                                            </th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                Total
+                                            </th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                Tanggal
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200">
+                                        @foreach ($recentOrders as $order)
+                                            <tr class="hover:bg-gray-50">
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                                    {{ $order->invoice_number }}
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    <div class="text-sm text-gray-900">{{ Str::limit($order->product_name, 30) }}</div>
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    <div class="text-sm text-gray-900">{{ $order->customer_name }}</div>
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                    {{ $order->quantity }}
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">
+                                                    Rp {{ number_format($order->total, 0, ',', '.') }}
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                    {{ \Carbon\Carbon::parse($order->created_at)->format('d M Y') }}
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        @else
+                            <div class="text-center py-8">
+                                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+                                </svg>
+                                <h3 class="mt-4 text-lg font-medium text-gray-900">Belum ada pesanan</h3>
+                                <p class="mt-2 text-gray-600">Pesanan yang sudah dibayar akan muncul di sini.</p>
                             </div>
                         @endif
                     </div>

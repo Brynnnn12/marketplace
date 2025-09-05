@@ -106,10 +106,39 @@
                                     <span>{{ $product->created_at->format('d/m/Y') }}</span>
                                 </div>
 
-                                <a href="{{ route('products.public.show', $product) }}"
-                                    class="block text-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded transition duration-300">
-                                    Lihat Detail
-                                </a>
+                                <!-- Action Buttons -->
+                                <div class="space-y-2">
+                                    @auth
+                                        @if (Auth::id() !== $product->seller->user_id)
+                                            <button onclick="addToCartFromGrid({{ $product->id }}, this)"
+                                                class="w-full px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white text-sm font-medium rounded transition duration-300">
+                                                <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor"
+                                                    viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                        d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5M7 13l2.5 5m0 0h5.5M12 21a1 1 0 100-2 1 1 0 000 2zm7 0a1 1 0 100-2 1 1 0 000 2z">
+                                                    </path>
+                                                </svg>
+                                                Masukkan Keranjang
+                                            </button>
+                                        @endif
+                                    @else
+                                        <a href="{{ route('login') }}"
+                                            class="block w-full px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white text-sm font-medium rounded text-center transition duration-300">
+                                            <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5M7 13l2.5 5m0 0h5.5M12 21a1 1 0 100-2 1 1 0 000 2zm7 0a1 1 0 100-2 1 1 0 000 2z">
+                                                </path>
+                                            </svg>
+                                            Masukkan Keranjang
+                                        </a>
+                                    @endauth
+
+                                    <a href="{{ route('products.public.show', $product) }}"
+                                        class="block text-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded transition duration-300">
+                                        Lihat Detail
+                                    </a>
+                                </div>
                             </div>
                         </div>
                     @endforeach
@@ -133,4 +162,77 @@
             @endif
         </div>
     </div>
+
+    <!-- Add to Cart JavaScript -->
+    <script>
+        function addToCartFromGrid(productId, button) {
+            const originalText = button.innerHTML;
+            button.innerHTML =
+                '<svg class="w-4 h-4 inline mr-1 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Menambahkan...';
+            button.disabled = true;
+
+            fetch(`/cart/add/${productId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
+                    body: JSON.stringify({
+                        quantity: 1
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    button.innerHTML = originalText;
+                    button.disabled = false;
+
+                    if (data.success) {
+                        // Update cart count in navigation
+                        window.dispatchEvent(new CustomEvent('cart-updated', {
+                            detail: {
+                                count: data.cart_count
+                            }
+                        }));
+
+                        // Show success message
+                        showSuccessMessage(data.message);
+                    } else {
+                        alert('Error: ' + (data.message || data.error));
+                    }
+                })
+                .catch(error => {
+                    button.innerHTML = originalText;
+                    button.disabled = false;
+                    console.error('Error:', error);
+                    alert('Terjadi kesalahan saat menambahkan ke keranjang');
+                });
+        }
+
+        function showSuccessMessage(message) {
+            const successDiv = document.createElement('div');
+            successDiv.className =
+                'fixed top-4 right-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded z-50 shadow-lg';
+            successDiv.innerHTML = `
+                <div class="flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    ${message}
+                    <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-green-500 hover:text-green-700">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+            `;
+            document.body.appendChild(successDiv);
+
+            // Auto remove after 4 seconds
+            setTimeout(() => {
+                if (successDiv.parentNode) {
+                    successDiv.remove();
+                }
+            }, 4000);
+        }
+    </script>
 </x-app-layout>

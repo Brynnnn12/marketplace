@@ -102,16 +102,43 @@
                                 <p class="text-yellow-800 font-medium">Ini adalah produk Anda sendiri</p>
                             </div>
                         @else
-                            <button onclick="purchaseProduct({{ $product->id }})"
-                                class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-6 rounded-lg text-lg transition duration-300 mb-4">
-                                Beli Sekarang - Rp {{ number_format($product->price, 0, ',', '.') }}
-                            </button>
+                            <div class="space-y-3 mb-6">
+                                <!-- Add to Cart Button -->
+                                <button onclick="addToCart({{ $product->id }})"
+                                    class="w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-6 rounded-lg transition duration-300"
+                                    id="addToCartBtn">
+                                    <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5M7 13l2.5 5m0 0h5.5M12 21a1 1 0 100-2 1 1 0 000 2zm7 0a1 1 0 100-2 1 1 0 000 2z">
+                                        </path>
+                                    </svg>
+                                    Masukkan ke Keranjang
+                                </button>
+
+                                <!-- Buy Now Button -->
+                                <button onclick="purchaseProduct({{ $product->id }})"
+                                    class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-6 rounded-lg text-lg transition duration-300">
+                                    Beli Sekarang - Rp {{ number_format($product->price, 0, ',', '.') }}
+                                </button>
+                            </div>
                         @endif
                     @else
-                        <a href="{{ route('login') }}"
-                            class="block w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-6 rounded-lg text-lg text-center transition duration-300 mb-4">
-                            Login untuk Membeli
-                        </a>
+                        <div class="space-y-3 mb-6">
+                            <a href="{{ route('login') }}"
+                                class="block w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-6 rounded-lg text-center transition duration-300">
+                                <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5M7 13l2.5 5m0 0h5.5M12 21a1 1 0 100-2 1 1 0 000 2zm7 0a1 1 0 100-2 1 1 0 000 2z">
+                                    </path>
+                                </svg>
+                                Masukkan ke Keranjang
+                            </a>
+                            <a href="{{ route('login') }}"
+                                class="block w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-6 rounded-lg text-lg text-center transition duration-300">
+                                Login untuk Membeli
+                            </a>
+                        </div>
                     @endauth <!-- Product Features -->
                     <div class="border-t border-gray-200 pt-4">
                         <div class="grid grid-cols-2 gap-4 text-sm">
@@ -262,6 +289,67 @@
                     alert('Terjadi kesalahan: ' + error.message);
                     button.innerHTML = originalText;
                     button.disabled = false;
+                });
+        }
+
+        // Function to add product to cart
+        function addToCart(productId) {
+            const button = document.getElementById('addToCartBtn');
+            const originalText = button.innerHTML;
+            button.innerHTML =
+                '<svg class="w-5 h-5 inline mr-2 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Menambahkan...';
+            button.disabled = true;
+
+            fetch(`/cart/add/${productId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
+                    body: JSON.stringify({
+                        quantity: 1
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    button.innerHTML = originalText;
+                    button.disabled = false;
+
+                    if (data.success) {
+                        // Update cart count in navigation
+                        window.dispatchEvent(new CustomEvent('cart-updated', {
+                            detail: {
+                                count: data.cart_count
+                            }
+                        }));
+
+                        // Show success message
+                        const successDiv = document.createElement('div');
+                        successDiv.className =
+                            'fixed top-4 right-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded z-50';
+                        successDiv.innerHTML = `
+                        <div class="flex items-center">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            ${data.message}
+                        </div>
+                    `;
+                        document.body.appendChild(successDiv);
+
+                        // Remove success message after 3 seconds
+                        setTimeout(() => {
+                            successDiv.remove();
+                        }, 3000);
+                    } else {
+                        alert('Error: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    button.innerHTML = originalText;
+                    button.disabled = false;
+                    console.error('Error:', error);
+                    alert('Terjadi kesalahan saat menambahkan ke keranjang');
                 });
         }
 

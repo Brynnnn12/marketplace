@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Seller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 
 class SellerApplicationController extends Controller
 {
@@ -59,9 +60,87 @@ class SellerApplicationController extends Controller
         $products = $seller->products()->latest()->get();
         $totalProducts = $products->count();
 
-        // Get recent orders for this seller's products
-        $recentOrders = collect(); // Will be implemented when order system is ready
+        // Get product IDs for this seller
+        $productIds = $products->pluck('id');
 
-        return view('seller.dashboard', compact('seller', 'products', 'totalProducts', 'recentOrders'));
+        // Calculate total earnings from paid orders only
+        $totalEarnings = DB::table('order_details')
+            ->join('orders', 'order_details.order_id', '=', 'orders.id')
+            ->whereIn('order_details.product_id', $productIds)
+            ->where('orders.status', 'paid')
+            ->sum(DB::raw('order_details.quantity * order_details.price'));
+
+        // Calculate monthly earnings (current month)
+        $monthlyEarnings = DB::table('order_details')
+            ->join('orders', 'order_details.order_id', '=', 'orders.id')
+            ->whereIn('order_details.product_id', $productIds)
+            ->where('orders.status', 'paid')
+            ->whereMonth('orders.created_at', now()->month)
+            ->whereYear('orders.created_at', now()->year)
+            ->sum(DB::raw('order_details.quantity * order_details.price'));
+
+        // Calculate total orders (paid orders only)
+        $totalOrders = DB::table('order_details')
+            ->join('orders', 'order_details.order_id', '=', 'orders.id')
+            ->whereIn('order_details.product_id', $productIds)
+            ->where('orders.status', 'paid')
+            ->distinct('orders.id')
+            ->count('orders.id');
+
+        // Calculate total sold products quantity
+        $totalSoldQuantity = DB::table('order_details')
+            ->join('orders', 'order_details.order_id', '=', 'orders.id')
+            ->whereIn('order_details.product_id', $productIds)
+            ->where('orders.status', 'paid')
+            ->sum('order_details.quantity');
+
+        // Get recent orders for this seller's products (last 10)
+        $recentOrders = DB::table('order_details')
+            ->join('orders', 'order_details.order_id', '=', 'orders.id')
+            ->join('products', 'order_details.product_id', '=', 'products.id')
+            ->join('users', 'orders.user_id', '=', 'users.id')
+            ->whereIn('order_details.product_id', $productIds)
+            ->where('orders.status', 'paid')
+            ->select(
+                'orders.invoice_number',
+                'orders.created_at',
+                'products.name as product_name',
+                'users.name as customer_name',
+                'order_details.quantity',
+                'order_details.price',
+                DB::raw('order_details.quantity * order_details.price as total')
+            )
+            ->orderBy('orders.created_at', 'desc')
+            ->limit(10)
+            ->get();
+
+        // Get daily earnings for the last 7 days (for chart)
+        $dailyEarnings = [];
+        for ($i = 6; $i >= 0; $i--) {
+            $date = now()->subDays($i);
+            $earnings = DB::table('order_details')
+                ->join('orders', 'order_details.order_id', '=', 'orders.id')
+                ->whereIn('order_details.product_id', $productIds)
+                ->where('orders.status', 'paid')
+                ->whereDate('orders.created_at', $date->format('Y-m-d'))
+                ->sum(DB::raw('order_details.quantity * order_details.price'));
+
+            $dailyEarnings[] = [
+                'date' => $date->format('d/m'),
+                'earnings' => $earnings ?? 0
+            ];
+        }
+
+        return view('seller.dashboard', compact(
+            'seller',
+            'products',
+            'totalProducts',
+            'totalEarnings',
+            'monthlyEarnings',
+            'totalOrders',
+            'totalSoldQuantity',
+            'recentOrders',
+            'dailyEarnings'
+        ));
     }
 }

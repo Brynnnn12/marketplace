@@ -35,7 +35,33 @@
             </div>
 
             <!-- Settings Dropdown -->
-            <div class="hidden sm:flex sm:items-center sm:ms-6">
+            <div class="hidden sm:flex sm:items-center sm:ms-6 space-x-4">
+                <!-- Cart Icon -->
+                @auth
+                    <div class="relative" x-data="{ count: 0 }" x-init="// Load cart count on page load
+                    fetch('/cart/count')
+                        .then(response => response.json())
+                        .then(data => count = data.count);
+                    
+                    // Listen for cart updates
+                    window.addEventListener('cart-updated', (event) => {
+                        count = event.detail.count;
+                    });">
+                        <a href="{{ route('cart.index') }}"
+                            class="relative inline-flex items-center px-3 py-2 text-gray-500 hover:text-gray-700 transition duration-150 ease-in-out">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5M7 13l2.5 5m0 0h5.5M12 21a1 1 0 100-2 1 1 0 000 2zm7 0a1 1 0 100-2 1 1 0 000 2z">
+                                </path>
+                            </svg>
+                            <!-- Cart Count Badge -->
+                            <span x-show="count > 0" x-text="count"
+                                class="absolute -top-1 -right-1 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-600 rounded-full min-w-[1.25rem] h-5">
+                            </span>
+                        </a>
+                    </div>
+                @endauth
+
                 <x-dropdown align="right" width="48">
                     <x-slot name="trigger">
                         <button
@@ -97,6 +123,18 @@
             <x-responsive-nav-link :href="route('products.public.index')" :active="request()->routeIs('products.*')">
                 {{ __('Produk') }}
             </x-responsive-nav-link>
+            @auth
+                <x-responsive-nav-link :href="route('cart.index')" :active="request()->routeIs('cart.*')">
+                    <div class="flex items-center">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5M7 13l2.5 5m0 0h5.5M12 21a1 1 0 100-2 1 1 0 000 2zm7 0a1 1 0 100-2 1 1 0 000 2z">
+                            </path>
+                        </svg>
+                        {{ __('Keranjang') }}
+                    </div>
+                </x-responsive-nav-link>
+            @endauth
             <x-responsive-nav-link :href="route('orders.index')" :active="request()->routeIs('orders.*')">
                 {{ __('Pesanan Saya') }}
             </x-responsive-nav-link>

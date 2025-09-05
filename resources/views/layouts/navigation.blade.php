@@ -18,6 +18,9 @@
                     <x-nav-link :href="route('products.public.index')" :active="request()->routeIs('products.*')">
                         {{ __('Produk') }}
                     </x-nav-link>
+                    <x-nav-link :href="route('orders.index')" :active="request()->routeIs('orders.*')">
+                        {{ __('Pesanan Saya') }}
+                    </x-nav-link>
 
                     @if (Auth::user()->seller?->status === 'approved')
                         <x-nav-link :href="route('seller.dashboard')" :active="request()->routeIs('seller.*')">
@@ -93,6 +96,9 @@
             </x-responsive-nav-link>
             <x-responsive-nav-link :href="route('products.public.index')" :active="request()->routeIs('products.*')">
                 {{ __('Produk') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('orders.index')" :active="request()->routeIs('orders.*')">
+                {{ __('Pesanan Saya') }}
             </x-responsive-nav-link>
 
             @if (Auth::user()->seller?->status === 'approved')

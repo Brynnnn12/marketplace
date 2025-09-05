@@ -58,9 +58,7 @@
                     @if (request('search'))
                         untuk "<strong>{{ request('search') }}</strong>"
                     @endif
-                    @if (request('category'))
-                        dalam kategori "<strong>{{ ucfirst(request('category')) }}</strong>"
-                    @endif
+
                 </p>
             </div>
 
@@ -100,9 +98,7 @@
                                     <span class="text-lg font-bold text-green-600">
                                         Rp {{ number_format($product->price, 0, ',', '.') }}
                                     </span>
-                                    <span class="text-xs text-gray-500 capitalize bg-gray-100 px-2 py-1 rounded">
-                                        {{ $product->category }}
-                                    </span>
+
                                 </div>
 
                                 <div class="flex justify-between items-center text-xs text-gray-500 mb-4">

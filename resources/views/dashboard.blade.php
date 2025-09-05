@@ -92,7 +92,8 @@
                 <div class="p-6">
                     <div class="flex justify-between items-center mb-6">
                         <h3 class="text-xl font-bold text-gray-900">Riwayat Pesanan Terbaru</h3>
-                        <a href="#" class="text-blue-600 hover:text-blue-800 font-medium">Lihat Semua</a>
+                        <a href="{{ route('orders.index') }}"
+                            class="text-blue-600 hover:text-blue-800 font-medium">Lihat Semua</a>
                     </div>
 
                     @if ($orders->count() > 0)

@@ -6,6 +6,7 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\PublicProductController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\DownloadController;
+use App\Http\Controllers\OrderController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -38,6 +39,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
 Route::get('/dashboard', function () {
     return view('dashboard');
 })->middleware(['auth', 'verified', 'user'])->name('dashboard');
+
+// Order routes
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
+    Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show');
+});
 
 // Route untuk admin - redirect ke Filament admin panel
 Route::get('/admin-dashboard', function () {

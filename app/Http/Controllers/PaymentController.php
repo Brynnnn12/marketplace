@@ -72,11 +72,46 @@ class PaymentController extends Controller
             return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
         }
     }
-    public function paymentSuccess(Order $order)
+
+    /**
+     * Validate access to payment status page and redirect if status doesn't match
+     */
+    private function validateAndRedirectPaymentAccess(Order $order, array $allowedStatuses)
     {
         if ($order->user_id !== Auth::id()) {
             abort(403);
         }
+
+        if (!in_array($order->status, $allowedStatuses)) {
+            return $this->redirectToCorrectStatusPage($order);
+        }
+
+        return null; // No redirect needed
+    }
+
+    /**
+     * Redirect to correct status page based on order status
+     */
+    private function redirectToCorrectStatusPage(Order $order)
+    {
+        switch ($order->status) {
+            case 'paid':
+                return redirect()->route('payment.success', $order);
+            case 'pending':
+                return redirect()->route('payment.pending', $order);
+            case 'failed':
+            case 'expired':
+            case 'cancelled':
+                return redirect()->route('payment.failed', $order);
+            default:
+                return redirect()->route('payment.error', $order);
+        }
+    }
+
+    public function paymentSuccess(Order $order)
+    {
+        $redirect = $this->validateAndRedirectPaymentAccess($order, ['paid']);
+        if ($redirect) return $redirect;
 
         // Load products with seller relationship
         $order->load(['products.seller']);
@@ -86,9 +121,8 @@ class PaymentController extends Controller
 
     public function paymentFailed(Order $order)
     {
-        if ($order->user_id !== Auth::id()) {
-            abort(403);
-        }
+        $redirect = $this->validateAndRedirectPaymentAccess($order, ['failed', 'expired', 'cancelled']);
+        if ($redirect) return $redirect;
 
         // Load products with seller relationship
         $order->load(['products.seller']);
@@ -98,9 +132,8 @@ class PaymentController extends Controller
 
     public function paymentPending(Order $order)
     {
-        if ($order->user_id !== Auth::id()) {
-            abort(403);
-        }
+        $redirect = $this->validateAndRedirectPaymentAccess($order, ['pending']);
+        if ($redirect) return $redirect;
 
         // Load products with seller relationship
         $order->load(['products.seller']);
@@ -110,8 +143,11 @@ class PaymentController extends Controller
 
     public function paymentError(Order $order)
     {
-        if ($order->user_id !== Auth::id()) {
-            abort(403);
+        // For error page, we allow access from any problematic status
+        // But redirect to appropriate page if status is success or pending
+        $redirect = $this->validateAndRedirectPaymentAccess($order, ['failed', 'expired', 'cancelled', 'deny']);
+        if ($redirect && in_array($order->status, ['paid', 'pending'])) {
+            return $redirect;
         }
 
         // Load products with seller relationship
@@ -136,6 +172,11 @@ class PaymentController extends Controller
             $payment = $order->payment;
 
             if ($payment) {
+                // Convert to object if it's an array
+                if (is_array($status)) {
+                    $status = (object) $status;
+                }
+
                 $transaction_status = $status->transaction_status;
                 $fraud_status = $status->fraud_status ?? null;
 
@@ -183,13 +224,13 @@ class PaymentController extends Controller
             case 'paid':
                 return route('payment.success', $order);
             case 'failed':
-                return route('payment.failed', $order);
             case 'expired':
             case 'cancelled':
                 return route('payment.failed', $order);
             case 'pending':
-            default:
                 return route('payment.pending', $order);
+            default:
+                return route('payment.error', $order);
         }
     }
 }

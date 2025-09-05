@@ -175,19 +175,6 @@
                                                 class="text-xs bg-green-100 hover:bg-green-200 text-green-800 px-3 py-1 rounded-full transition duration-200">
                                                 Lihat Detail
                                             </a>
-
-                                            @php
-                                                $hasDownloadableFiles =
-                                                    $order->products &&
-                                                    $order->products->where('file_path', '!=', null)->count() > 0;
-                                            @endphp
-
-                                            @if ($hasDownloadableFiles)
-                                                <a href="{{ route('download.order', $order) }}"
-                                                    class="text-xs bg-blue-100 hover:bg-blue-200 text-blue-800 px-3 py-1 rounded-full transition duration-200">
-                                                    Download File
-                                                </a>
-                                            @endif
                                         @elseif($order->status == 'failed')
                                             <a href="{{ route('payment.failed', $order) }}"
                                                 class="text-xs bg-red-100 hover:bg-red-200 text-red-800 px-3 py-1 rounded-full transition duration-200">

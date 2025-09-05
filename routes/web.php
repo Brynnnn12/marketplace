@@ -19,7 +19,6 @@ Route::post('/products/{product}/purchase', [PublicProductController::class, 'pu
 
 // Payment routes
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::post('/payment/{product}', [PaymentController::class, 'createPayment'])->name('payment.create');
     Route::get('/payment/success/{order}', [PaymentController::class, 'paymentSuccess'])->name('payment.success');
     Route::get('/payment/failed/{order}', [PaymentController::class, 'paymentFailed'])->name('payment.failed');
     Route::get('/payment/pending/{order}', [PaymentController::class, 'paymentPending'])->name('payment.pending');
@@ -30,7 +29,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
 // Download routes
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/download/{order}/{product}', [DownloadController::class, 'downloadProduct'])->name('download.product');
-    Route::get('/download/{order}/all', [DownloadController::class, 'downloadAllOrderFiles'])->name('download.order');
 });
 
 // Note: Midtrans webhook moved to routes/api.php (no CSRF protection needed)

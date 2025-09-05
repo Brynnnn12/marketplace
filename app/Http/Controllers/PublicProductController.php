@@ -133,7 +133,7 @@ class PublicProductController extends Controller
 
             return response()->json([
                 'snap_token' => $snapToken,
-                'order_id' => $order->id
+                'order_id' => $order->invoice_number  // Use invoice_number instead of id
             ]);
         } catch (\Exception $e) {
             $order->delete(); // Clean up failed order

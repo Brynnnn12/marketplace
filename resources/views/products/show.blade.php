@@ -233,7 +233,7 @@
                     snap.pay(data.snap_token, {
                         onSuccess: function(result) {
                             console.log('Payment success:', result);
-                            // Check payment status and redirect
+                            // data.order_id is the invoice_number
                             checkPaymentStatusAndRedirect(data.order_id);
                         },
                         onPending: function(result) {
@@ -266,6 +266,7 @@
         }
 
         // Function to check payment status and redirect accordingly
+        // orderId parameter is actually the invoice_number
         function checkPaymentStatusAndRedirect(orderId, skipIfPending = false) {
             fetch(`/payment/check-status/${orderId}`, {
                     method: 'GET',
